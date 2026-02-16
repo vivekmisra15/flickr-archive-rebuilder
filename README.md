@@ -142,3 +142,11 @@ No network requests are made.
 # 📜 License
 
 MIT
+## ⚠️ Cloud sync warning
+
+Do not run metadata-rewrite steps (ExifTool) while a cloud sync client is uploading the same directory.
+Recommended workflow:
+1) Organize into a new output folder (copy mode)
+2) Run fixes/enrichment on the output folder
+3) Upload the output folder
+

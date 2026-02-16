@@ -1,152 +1,159 @@
 # flickr-archive-rebuilder
 
-Reconstruct and reorganize a Flickr export using official JSON sidecar metadata.
+Rebuild and reorganize a Flickr export into a clean, portable photo archive.
 
-## ✨ Overview
+---
 
-Flickr exports media separately from its metadata.
+## 📸 Why This Exists
 
-This project restores:
+If you've downloaded your data from Flickr, you may have noticed:
 
--   📅 Correct capture timestamps (photos + videos)
-    
--   🎬 Proper QuickTime video dates (UTC-safe)
-    
--   🗂 Clean `YYYY/MM` archive structure
-    
--   🏷 Optional embedding of titles, descriptions, tags, and GPS
-    
--   ☁ Ready-for-upload structure for Google Photos or long-term storage
-    
+- Photos and videos are stored in multiple `data-download-*` folders
+- Important metadata (like the original capture date) is stored separately in JSON files
+- Video timestamps may shift due to QuickTime/UTC formatting
+- Albums are not reconstructed
+- Uploading directly to Google Photos or Apple Photos can lead to incorrect timelines
 
-Everything runs locally. No external APIs.
+Flickr provides the data — but not in a format that’s immediately migration-ready.
 
-----------
+This tool fixes that.
 
-## 🔧 Requirements
+---
 
--   Python 3.9+
-    
--   ExifTool installed and available in PATH
-    
+## 🧠 What Problem Does It Solve?
 
-Install ExifTool (macOS):
+When exporting from Flickr:
 
-`brew install exiftool` 
+- The actual photo files may not contain correct `DateTimeOriginal`
+- Videos may have shifted timestamps
+- Metadata like titles, tags, or GPS is stored in separate JSON sidecar files
+- Folder structure is fragmented
 
-----------
+As a result:
+- Your timeline may be incorrect in Google Photos
+- Memories appear on wrong dates
+- Media becomes harder to search and organize
 
-## 📁 Typical Flickr Export
+This project reconstructs a clean, standards-compliant archive.
 
-`Flickr Downloads/ data-download-1/ data-download-2/
-  ...
+---
+
+## 🧾 What Is EXIF?
+
+**EXIF (Exchangeable Image File Format)** is metadata embedded inside image and video files.
+
+It stores:
+- Date taken
+- Camera information
+- GPS coordinates
+- Orientation
+- And more
+
+Modern photo apps rely heavily on EXIF to build timelines and memories.
+
+If EXIF timestamps are missing or incorrect, your media library becomes disorganized.
+
+---
+
+## 🔧 What This Tool Does
+
+`flickr-archive-rebuilder`:
+
+1️⃣ Restores correct photo capture dates from Flickr JSON  
+2️⃣ Fixes video timestamps (QuickTime-safe handling)  
+3️⃣ Reorganizes media into a clean `YYYY/MM` folder structure  
+4️⃣ Optionally embeds titles, tags, descriptions, and GPS metadata  
+
+All processing happens locally. No APIs. No uploads.
+
+---
+
+## 🛡 Safe-by-Default Design
+
+- The original Flickr download is never modified.
+- Media is first copied into an organized output folder.
+- Metadata fixes are applied only to the output folder.
+- Backups are created unless explicitly disabled.
+
+This prevents:
+- Cloud sync conflicts
+- Accidental data corruption
+- Polluting the original export
+
+---
+
+## 📂 Typical Flickr Export Structure
+
+Flickr Downloads/
+data-download-1/
+data-download-2/
+...
 
 Flickr Json Files/
-  <export>_part1/
-  <export>_part2/` 
+<export>_part1/
+<export>_part2/
 
-----------
 
-# 🛠 Workflow
+---
 
-## 1️⃣ Fix Photo Dates
+## 🚀 Recommended Workflow
 
-`python3 scripts/fix_photo_dates.py \
+```bash
+python3 scripts/rebuild_archive.py \
   --downloads "/path/to/Flickr Downloads" \
-  --json "/path/to/part1"  "/path/to/part2"` 
+  --json "/path/to/part1" "/path/to/part2" \
+  --out "/path/to/Flickr Organized"
+This will:
 
-Writes:
+Create a YYYY/MM folder structure
+Restore photo and video timestamps
+Leave the original download untouched
 
--   DateTimeOriginal
-    
--   CreateDate
-    
--   ModifyDate
-    
+Optional:
 
-----------
+--embed
+to embed titles, tags, and GPS (if present).
 
-## 2️⃣ Fix Video Dates (MP4/MOV)
+⚠️ Cloud Sync Warning
+Do not run metadata-rewrite steps while a cloud sync client (Google Drive, Dropbox, etc.) is uploading the same directory.
 
-`python3 scripts/fix_video_dates.py \
-  --downloads "/path/to/Flickr Downloads" \
-  --json "/path/to/part1"  "/path/to/part2"` 
+Recommended:
 
-Handles QuickTime UTC properly.
+Generate the organized archive.
+Let it stabilize.
+Then upload that folder.
 
-----------
+---
 
-## 3️⃣ Organize into Year/Month
+📦 Result
 
-`python3 scripts/organize_by_year_month.py \
-  --downloads "/path/to/Flickr Downloads" \
-  --out "/path/to/Flickr Organized" \
-  --mode copy` 
+You end up with:
 
-Creates:
-
-`Flickr  Organized/  2016/11/  2017/06/` 
-
-----------
-
-## 4️⃣ Optional: Embed Additional Metadata
-
-`python3 scripts/embed_metadata.py \
-  --media-root "/path/to/Flickr Organized" \
-  --json "/path/to/part1"  "/path/to/part2" \
-  --title --description --tags --geo` 
-
-Writes only fields present in JSON.
-
-----------
-
-# 📦 Output
-
-A clean, portable archive:
-
-`YYYY/MM/media files...` 
+Flickr Organized/
+  2016/11/
+  2017/06/
+  ...
+With correct timestamps and searchable metadata.
 
 Ready for:
 
--   Google Photos
-    
--   Apple Photos
-    
--   NAS storage
-    
--   Cold archive backup
-    
+Google Photos
+Apple Photos
+NAS storage
 
-----------
+Long-term archival
 
-# ⚠ Design Notes
+---
 
--   JSON is treated as authoritative for capture date.
-    
--   Video timestamps stored internally in UTC (per QuickTime spec).
-    
--   ID matching uses Flickr photo ID embedded in filename.
-    
--   Non-destructive by default.
-    
-
-----------
-
-# 🔒 Privacy
-
-All processing happens locally.  
+🔒 Privacy
+All processing is done locally.
 No network requests are made.
 
-----------
+---
 
-# 📜 License
-
+📜 License
 MIT
-## ⚠️ Cloud sync warning
 
-Do not run metadata-rewrite steps (ExifTool) while a cloud sync client is uploading the same directory.
-Recommended workflow:
-1) Organize into a new output folder (copy mode)
-2) Run fixes/enrichment on the output folder
-3) Upload the output folder
+
+
 

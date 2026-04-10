@@ -67,10 +67,12 @@ def main():
 
     base = Path(__file__).parent
 
+    py = sys.executable or "python3"
+
     # 1) Organize into YYYY/MM (copy/move)
     if not args.skip_organize:
         run([
-            "python3", str(base / "organize_by_year_month.py"),
+            py, str(base / "organize_by_year_month.py"),
             "--downloads", args.downloads,
             "--out", args.out,
             "--mode", args.mode
@@ -79,7 +81,7 @@ def main():
     # 2) Fix photo + video dates ON THE OUTPUT folder (safe)
     if not args.skip_fix:
         photo_cmd = [
-            "python3", str(base / "fix_photo_dates.py"),
+            py, str(base / "fix_photo_dates.py"),
             "--downloads", args.out,
             "--json", *args.json,
         ]
@@ -88,7 +90,7 @@ def main():
         run(photo_cmd)
 
         video_cmd = [
-            "python3", str(base / "fix_video_dates.py"),
+            py, str(base / "fix_video_dates.py"),
             "--downloads", args.out,
             "--json", *args.json,
         ]
@@ -99,7 +101,7 @@ def main():
     # 3) Optional: embed additional metadata ON THE OUTPUT folder
     if args.embed and not args.skip_embed:
         cmd = [
-            "python3", str(base / "embed_metadata.py"),
+            py, str(base / "embed_metadata.py"),
             "--media-root", args.out,
             "--json", *args.json,
             "--title", "--description", "--tags", "--geo",
